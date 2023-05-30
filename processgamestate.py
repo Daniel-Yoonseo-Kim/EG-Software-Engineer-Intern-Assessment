@@ -125,19 +125,17 @@ class ProcessGameState:
 
     def extract_weapon_classes(self):
         # Extract weapon classes from the inventory json column
-        weapon_classes = []
         for _, row in self.data.iterrows():
             if row['inventory'] == None:
-                weapon_classes.append('None')
+                row['inventory'] = 'None'
             else:
                 inventory_dump = json.dumps(row['inventory'].tolist())
                 inventory = json.loads(inventory_dump)
                 weapon_class = []
                 for item in inventory:
                     weapon_class.append(item['weapon_class'])
-                weapon_classes.append(weapon_class)
+                row['inventory'] = weapon_class
                 weapon_class = []
-        return weapon_classes
 
     def find_weapon_class(self, weapon):
         weapon_classes = self.extract_weapon_classes()
@@ -151,13 +149,12 @@ class ProcessGameState:
 
         return final_data.shape[0] / self.data_length()
 
-##    def calculate_avg_entry_time(self, weapon_types, min_players, team):
-##        # Calculate the average timer for entering a bombsite with the given weapon types
-##        filtered_data = self.data[((self.data['team'] == team) &
-##                                  (self.data['players'] >= min_players)]
-##
-##        filtered_data['timestamp'] = pd.to_datetime(filtered_data['timestamp'])
-##        filtered_data = filtered_data.sort_values(by='timestamp')
-##
-##        avg_entry_time = filtered_data.groupby('round')['timestamp'].diff().mean()
-##        return avg_entry_time
+    def calculate_avg_entry_time(self, weapon_types, team):
+        # Calculate the average timer for entering a bombsite with the given weapon types
+        filtered_data = self.data[((self.data['team'] == team))]
+
+        filtered_data['clock_time'] = pd.to_datetime(filtered_data['clock_time'])
+        filtered_data = filtered_data.sort_values(by='clock_time')
+
+        avg_entry_time = filtered_data.groupby('round_num')['clock_time'].diff().mean()
+        return avg_entry_time
