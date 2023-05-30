@@ -29,10 +29,10 @@ def onLine(line, point):
 def direction(a, b, c):
     value = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y)
     # Case Collinear
-    if value == 0:
+    if value is 0:
         return 0
     # Case Clockwise
-    elif value > 0:
+    if value > 0:
         return 1
     # Case Counter-Clockwise
     else:
@@ -94,7 +94,7 @@ def checkInside(boundary, point):
 
         i = (i + 1) % n
         # Break when iterated through all boundary lines
-        if i is 0:
+        if i == 0:
             break
 
     # If odd number of intersections, the point is within the boundary
@@ -120,14 +120,14 @@ class ProcessGameState:
         self.site_boundaries = points
 
     def isSite(self, point):
-        if self.site_boundaries is not None:
+        if self.site_boundaries != None:
             return checkInside(self.site_boundaries, point)
 
     def extract_weapon_classes(self):
         # Extract weapon classes from the inventory json column
         weapon_classes = []
         for _, row in self.data.iterrows():
-            if row['inventory'] is None:
+            if row['inventory'] == None:
                 weapon_classes.append('None')
             else:
                 inventory_dump = json.dumps(row['inventory'].tolist())
@@ -143,14 +143,21 @@ class ProcessGameState:
         weapon_classes = self.extract_weapon_classes()
         return next(x for x in weapon_classes if weapon in x)
 
-    def calculate_avg_entry_time(self, site_name, weapon_types, min_players, team):
-        # Calculate the average timer for entering a bombsite with the given weapon types
-        filtered_data = self.data[(self.data['site'] == site_name) &
-                                  (self.data['team'] == team) &
-                                  (self.data['players'] >= min_players)]
+    # General idea down, running into a truth value ambiguity error on the line using isSite function
+    def common_strategy(self, team, side):
+        filtered_data = self.data.loc[(self.data["team"] == team) &
+                                       (self.data["side"] == side)]
+        # final_data = filtered_data[self.isSite(Point(filtered_data['x'], filtered_data['y']))]
 
-        filtered_data['timestamp'] = pd.to_datetime(filtered_data['timestamp'])
-        filtered_data = filtered_data.sort_values(by='timestamp')
+        return final_data.shape[0] / self.data_length()
 
-        avg_entry_time = filtered_data.groupby('round')['timestamp'].diff().mean()
-        return avg_entry_time
+##    def calculate_avg_entry_time(self, weapon_types, min_players, team):
+##        # Calculate the average timer for entering a bombsite with the given weapon types
+##        filtered_data = self.data[((self.data['team'] == team) &
+##                                  (self.data['players'] >= min_players)]
+##
+##        filtered_data['timestamp'] = pd.to_datetime(filtered_data['timestamp'])
+##        filtered_data = filtered_data.sort_values(by='timestamp')
+##
+##        avg_entry_time = filtered_data.groupby('round')['timestamp'].diff().mean()
+##        return avg_entry_time
